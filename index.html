@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mindful Response</title>
+  <style>
+    /* ===== CSS ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+
+    /* Oberer Bereich - Signalanzeige */
+    .anzeigebereich {
+      flex: 3; /* Mehr Platz für den oberen Bereich */
+      display: flex;
+      justify-content: space-evenly; /* Gleichmäßige Verteilung */
+      align-items: center;
+      background-color: #add8e6; /* Hellblauer Hintergrund */
+      padding: 2rem; /* Mehr Innenabstand */
+      gap: 40px; /* Mehr Abstand zwischen den Elementen */
+    }
+
+    /* Signal-Kreise */
+    .signal-circle {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background-color: lightgray;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36px;
+      font-weight: bold;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    /* Stil für das L auf dem linken Pedal */
+   .signal-circle[data-pedal="left"]::after {
+         content: "L"; /* Content für "L" wieder hinzugefügt */
+           color: #fff; /* Weiß */
+      font-size: 36px;
+      font-weight: bold;
+       background-image: url('https://cdn.gamma.app/fhpleqvbjim2f32/eebcb72d2ad843148a5bbdddbbf96de2/original/Pedallen.png');
+        background-size: cover; /* Bild füllt den Container aus */
+          background-position: center; /* Bild wird zentriert */
+        position: absolute;
+         top: 50%;
+        left: 50%;
+         transform: translate(-50%, -50%);
+         width: 80%;
+           height: 80%;
+     
+    }
+
+    /* Stil für das R auf dem rechten Pedal */
+    .signal-circle[data-pedal="right"]::after {
+          content: "R"; /* Content für "R" wieder hinzugefügt */
+            color: #fff; /* Weiß */
+        font-size: 36px;
+        font-weight: bold;
+         background-image: url('https://cdn.gamma.app/fhpleqvbjim2f32/eebcb72d2ad843148a5bbdddbbf96de2/original/Pedallen.png');
+          background-size: cover; /* Bild füllt den Container aus */
+         background-position: center; /* Bild wird zentriert */
+       position: absolute;
+         top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scaleX(-1);
+          width: 80%;
+           height: 80%;
+    }
+
+    /* Benachrichtigungsbereich */
+    #tonBenachrichtigung {
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: orange;
+      font-size: 18px;
+    }
+
+    /* Mittlere Tasten (Ton hoch und Ton tief) */
+    .middle-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px; /* Weniger Abstand zwischen Ton hoch und Ton tief */
+      margin: 10px 0;
+    }
+
+    .tone-button {
+      width: 200px; /* Länger */
+      height: 40px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+       cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .tone-button.tone-high {
+      background-color: lightgray;
+      color: black;
+    }
+
+    .tone-button.tone-low {
+      background-color: black;
+      color: white;
+    }
+
+    /* Unterer Bereich - Pedale und Farben */
+    .interaktionsbereich {
+      display: grid;
+      grid-template-columns: repeat(4, auto); /* 4 Spalten */
+      gap: 10px; /* Weniger Abstand zwischen Buttons */
+      align-items: center;
+      justify-items: center;
+      justify-content: center;
+      background-color: #ffffe0; /* Gelber Hintergrund */
+      padding: 0.5rem; /* Weniger Padding */
+      max-width: 60%;
+      margin: 0 auto; /* Zentriert */
+      border-radius: 10px;
+    }
+
+    /* Pedale-Stil */
+     .pedal-button {
+      width: 100px; /* Größer */
+      height: 50px; /* Größer */
+      clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 16px; /* Grösser */
+        text-align: center;
+         transition: background-color 0.3s, transform 0.2s;
+           cursor: pointer;
+    }
+
+   .pedal-left {
+       background: linear-gradient(to bottom, #e0e0e0, #bdbdbd);
+        border: none;
+   }
+
+    .pedal-right {
+    background: linear-gradient(to bottom, #757575, #424242);
+      border: none;
+   }
+
+    /* Farb-Buttons */
+    .color-button {
+      width: 60px; /* Größer */
+      height: 60px; /* Größer */
+      border-radius: 50%;
+      border: none;
+        cursor: pointer;
+          transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .color-button.blue { background-color: blue; }
+    .color-button.white { background-color: white; border: 1px solid #ddd; }
+    .color-button.yellow { background-color: yellow; }
+    .color-button.red { background-color: red; }
+    .color-button.green { background-color: green; }
+
+     .color-button:hover {
+          transform: scale(1.05);
+      }
+    /* Beschriftungen */
+     .button-container span {
+       display: none;
+    }
+      .button-container {
+       margin-top: 3px;
+        text-align: center;
+          white-space: nowrap;
+    }
+
+    /* Runden-Auswahl */
+    .runden-auswahl {
+      text-align: center;
+      margin: 20px auto;
+      padding: 10px;
+    }
+
+    .runden-auswahl h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+   .runden-auswahl button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+    }
+
+    .runden-auswahl button:hover {
+      background-color: #45a049;
+    }
+
+    /* Neustart-Button */
+    .spiel-neustart {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+     .spiel-neustart button {
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .spiel-neustart button:hover {
+      background-color: #e68900;
+    }
+        #spiel-start-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+             background-color: #ff9800;
+             color: white;
+             border: none;
+           border-radius: 5px;
+            margin: 0 auto 20px;
+            display: block;
+            width: 200px; /* Länger */
+        }
+         #spiel-start-button:hover {
+               background-color: #e68900;
+    }
+        #round-counter{
+          text-align: center;
+         font-weight: bold;
+         font-size: 18px;
+          margin: 10px 0;
+     }
+  </style>
+</head>
+<body>
+
+  <!-- Oberer Bereich - Signalanzeige -->
+  <div class="anzeigebereich">
+    <div id="signal1" data-pedal="" class="signal-circle"></div>
+    <div id="signal2" data-pedal="" class="signal-circle"></div>
+  </div>
+
+  <!-- Benachrichtigungsbereich -->
+  <div id="tonBenachrichtigung" style="text-align: center; margin-bottom: 10px; font-weight: bold;"></div>
+
+ <!-- Oberer Bereich - Farben -->
+   <div class="anzeigebereich">
+    <div class="button-container top-button">
+      <button class="color-button blue" data-type="color" data-value="blue"></button>
+      </div>
+    <div class="button-container top-button">
+      <button class="color-button white" data-type="color" data-value="white"></button>
+       </div>
+     <div class="button-container top-button">
+      <button class="color-button yellow" data-type="color" data-value="yellow"></button>
+      </div>
+    </div>
+
+     <!-- Mittlere Tasten (Ton hoch und Ton tief) -->
+    <div class="middle-buttons">
+      <div class="button-container">
+       <button class="tone-button tone-high" data-type="tone" data-value="high">Hochton</button>
+       </div>
+       <div class="button-container">
+           <button class="tone-button tone-low" data-type="tone" data-value="low">Tiefton</button>
+        </div>
+    </div>
+
+  <!-- Unterer Bereich - Pedale und Farben -->
+    <div class="interaktionsbereich">
+       <div class="button-container">
+           <button class="pedal-button pedal-left" data-type="pedal" data-value="left"></button>
+       </div>
+      <div class="button-container">
+          <button class="color-button red" data-type="color" data-value="red"></button>
+        </div>
+       <div class="button-container">
+          <button class="color-button green" data-type="color" data-value="green"></button>
+         </div>
+       <div class="button-container">
+         <button class="pedal-button pedal-right" data-type="pedal" data-value="right"></button>
+        </div>
+   </div>
+
+  <!-- Runden-Auswahl -->
+  <div class="runden-auswahl">
+    <h3>Wähle die Anzahl der Runden:</h3>
+    <button onclick="setRounds(10)">10 Runden</button>
+    <button onclick="setRounds(20)">20 Runden</button>
+    <button onclick="setRounds(30)">30 Runden</button>
+  </div>
+    <button id="spiel-start-button" style="display: none;" onclick="nextRound()">Spiel starten</button>
+     <div id="round-counter" style="display: none;"></div>
+
+  <script>
+    // ===== JavaScript =====
+    const colors = ["red", "blue", "green", "yellow", "white"];
+    const tones = ["high", "low"];
+    const pedals = ["left", "right"];
+     const signalTypes = ["color-pedal", "tone-color", "color-color", "tone-pedal"];
+    let currentSignals = [];
+    let userChoices = [];
+    let isWaitingForSecondInput = false; // Zustandsvariable für Eingaben
+
+      // Audio-Dateien für hohe und tiefe Töne vorbereiten
+    const toneHighAudio = new Audio('tONHOCH.mp3');
+    const toneLowAudio = new Audio('TONTIEF.mp3');
+
+    // Lade die Audiodateien und überprüfe, ob sie korrekt geladen werden
+    toneHighAudio.addEventListener('canplaythrough', () => console.log('Hoher Ton geladen.'));
+    toneLowAudio.addEventListener('canplaythrough', () => console.log('Tiefer Ton geladen.'));
+    toneHighAudio.addEventListener('error', () => console.error('Fehler beim Laden von tONHOCH.mp3'));
+    toneLowAudio.addEventListener('error', () => console.error('Fehler beim Laden von TONTIEF.mp3'));
+
+    let totalRounds = 0;
+    let currentRound = 0;
+    let correctAnswers = 0;
+
+   // Spiel initialisieren
+       function initializeGame() {
+      document.querySelector('.runden-auswahl').style.display = 'block';
+        document.getElementById('round-counter').style.display = 'none';
+      document.getElementById('spiel-start-button').style.display = 'none';
+      currentRound = 0;
+      correctAnswers = 0;
+      userChoices = [];
+      isWaitingForSecondInput = false;
+      document.querySelector('.spiel-neustart')?.remove(); // Neustart-Button entfernen, falls vorhanden
+    }
+
+    // Auswahl der Runden treffen
+     function setRounds(rounds) {
+      totalRounds = rounds;
+      document.querySelector('.runden-auswahl').style.display = 'none';
+       document.getElementById('spiel-start-button').style.display = 'block';
+       document.getElementById('round-counter').style.display = 'block';
+
+        document.getElementById('round-counter').textContent = `Runde ${currentRound +1} / ${totalRounds}`;
+     }
+
+    // Spielrunde starten
+    function nextRound() {
+      document.getElementById('round-counter').textContent = `Runde ${currentRound +1} / ${totalRounds}`;
+      if (currentRound < totalRounds) {
+        currentSignals = generateRandomSignals();
+        displaySignals(currentSignals);
+         userChoices = [];
+          isWaitingForSecondInput = false; // Zurücksetzen für neue Runde
+         currentRound++;
+       } else {
+          endGame();
+      }
+    }
+
+
+    // Benutzerentscheidung prüfen
+  function checkUserChoice() {
+      if (userChoices.length < 2) {
+        return; // Warte auf zwei Eingaben
+      }
+
+       let isCorrect = false;
+      const choice1 = userChoices[0];
+      const choice2 = userChoices[1];
+      const signal1 = currentSignals[0];
+      const signal2 = currentSignals[1];
+
+      const match1 = choice1.type === signal1.type && choice1.value === signal1.value;
+       const match2 = choice2.type === signal2.type && choice2.value === signal2.value;
+
+      const match3 = choice1.type === signal2.type && choice1.value === signal2.value;
+        const match4 = choice2.type === signal1.type && choice2.value === signal1.value;
+
+       if ((match1 && match2) || (match3 && match4)) {
+          isCorrect = true;
+          correctAnswers++;
+      }
+
+      userChoices = [];
+       isWaitingForSecondInput = false; // Eingabe für nächste Runde freigeben
+      nextRound();
+  }
+
+
+    // Spiel beenden und Ergebnis anzeigen
+      function endGame() {
+      const successRate = (correctAnswers / totalRounds) * 100;
+     if (successRate >= 60) {
+         alert(`Glückwunsch! Du hast mit ${successRate.toFixed(2)}% bestanden! 🎉`);
+      } else {
+         alert(`Leider nicht bestanden. Deine Erfolgsrate: ${successRate.toFixed(2)}%. Versuche es erneut! 😔`);
+       }
+       document.body.insertAdjacentHTML('beforeend', `
+         <div class="spiel-neustart">
+           <button onclick="initializeGame()">Neustart</button>
+        </div>
+      `);
+        document.getElementById('spiel-start-button').style.display = 'none';
+          document.getElementById('round-counter').style.display = 'none';
+   }
+
+    // Zufällige Signale generieren
+    function getRandom(array) {
+      return array[Math.floor(Math.random() * array.length)];
+   }
+
+    function generateRandomSignals() {
+     const randomType = getRandom(signalTypes);
+     let signal1, signal2;
+
+        switch (randomType) {
+           case "color-pedal":
+            signal1 = { type: "color", value: getRandom(colors) };
+               signal2 = { type: "pedal", value: getRandom(pedals) };
+              break;
+            case "tone-color":
+             signal1 = { type: "tone", value: getRandom(tones) };
+                signal2 = { type: "color", value: getRandom(colors) };
+                break;
+            case "color-color":
+             signal1 = { type: "color", value: getRandom(colors) };
+               signal2 = { type: "color", value: getRandom(colors.filter(c => c !== signal1.value)) };
+                break;
+             case "tone-pedal":
+                signal1 = { type: "tone", value: getRandom(tones) };
+             signal2 = { type: "pedal", value: getRandom(pedals) };
+                 break;
+         }
+
+         return [signal1, signal2];
+   }
+
+    function displaySignals(signals) {
+      const [s1, s2] = signals;
+      const signal1Element = document.getElementById("signal1");
+      const signal2Element = document.getElementById("signal2");
+       const tonBenachrichtigung = document.getElementById("tonBenachrichtigung");
+       tonBenachrichtigung.textContent = ""; // Leere die Benachrichtigung zuerst
+
+      // Signal 1
+       if (s1.type === "color") {
+         signal1Element.textContent = "";
+         signal1Element.style.backgroundColor = s1.value;
+        signal1Element.style.backgroundImage = "none";
+          signal1Element.dataset.pedal = "";
+        } else if (s1.type === "pedal") {
+           signal1Element.style.backgroundColor = "lightgray";
+            signal1Element.style.backgroundImage = 'none';
+           signal1Element.dataset.pedal = s1.value;
+         signal1Element.innerHTML = `<span style="color: #fff; font-weight: bold;">${s1.value === "left" ? "L" : "R"}</span>`;
+       }  else if (s1.type === "tone") {
+           signal1Element.textContent = s1.value === "high" ? "↑" : "↓";
+          signal1Element.style.backgroundColor = s1.value === "high" ? "#d3d3d3" : "black";
+          signal1Element.dataset.pedal = "";
+      }
+
+        // Signal 2
+       if (s2.type === "color") {
+         signal2Element.textContent = "";
+          signal2Element.style.backgroundColor = s2.value;
+          signal2Element.style.backgroundImage = "none";
+          signal2Element.dataset.pedal = "";
+        }  else if (s2.type === "pedal") {
+          signal2Element.style.backgroundColor = "lightgray";
+        signal2Element.style.backgroundImage = 'none';
+          signal2Element.dataset.pedal = s2.value;
+          signal2Element.innerHTML = `<span style="color: #fff; font-weight: bold;">${s2.value === "left" ? "L" : "R"}</span>`;
+        } else if (s2.type === "tone") {
+           signal2Element.textContent = s2.value === "high" ? "↑" : "↓";
+           signal2Element.style.backgroundColor = s2.value === "high" ? "#d3d3d3" : "black";
+            signal2Element.dataset.pedal = "";
+      }
+    }
+
+    // Event-Listener für Buttons – Eingabe korrekt handhaben
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("click", () => {
+        if (!isWaitingForSecondInput && userChoices.length < 2) {
+         userChoices.push({ type: button.dataset.type, value: button.dataset.value });
+            // Ton abspielen, wenn es ein Ton-Button ist
+          if (button.dataset.type === "tone") {
+            const audio = button.dataset.value === "high" ? toneHighAudio : toneLowAudio;
+            audio.currentTime = 0;
+            audio.play().catch(error => console.error('Fehler beim Abspielen des Tons:', error));
+          }
+         // Nach zwei Eingaben zur Überprüfung weiterleiten
+           if (userChoices.length === 2) {
+             isWaitingForSecondInput = true; // Blockiere weitere Eingaben bis zur Überprüfung
+             checkUserChoice();
+           }
+       }
+      });
+     });
+     // Spiel initialisieren beim Start
+      initializeGame();
+  </script>
+</body>
+</html>
